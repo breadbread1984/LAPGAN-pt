@@ -240,7 +240,7 @@ def run_LAPGAN(n_level=3, n_epoch=1, batch_size=256,
     return samples.numpy()
 
 def main(unused_argv):
-    run_LAPGAN(n_epochs = FLAGS.epochs, update_max = FLAGS.update_max)
+    run_LAPGAN(n_epoch = FLAGS.epochs, update_max = FLAGS.update_max)
 
 if __name__ == '__main__':
     app.run(main)
