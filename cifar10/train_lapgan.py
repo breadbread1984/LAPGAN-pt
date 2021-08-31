@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # @Author: morjio
 
+from absl import app, flags
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -18,7 +19,11 @@ from torchvision.utils import save_image
 from torch.autograd import Variable
 from lapgan import LAPGAN, gen_noise
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '2'
+FLAGS = flags.FLAGS;
+
+flags.DEFINE_integer('epochs', default = 25, help = 'number of epochs')
+flags.DEFINE_integer('update_max', default = 500, help = 'update max')
+flags.DEFINE_enum('device', default = 'gpu', enum_values = ['gpu', 'dtu'], help = 'device for training')
 
 def load_dataset(batch_size=256, download=False):
     """
@@ -45,7 +50,7 @@ def load_dataset(batch_size=256, download=False):
 def train_LAPGAN(LapGan_model, n_level, D_criterions, G_criterions,
                  D_optimizers, G_optimizers, trainloader, n_epoch,
                  batch_size, noise_dim, n_update_dis=1, n_update_gen=1,
-                 use_gpu=True, print_every=10, update_max=None):
+                 print_every=10, update_max=None):
     """train LAPGAN and print out the losses for Ds and Gs"""
     for G in LapGan_model.Gen_models:
         G.train()
@@ -53,9 +58,13 @@ def train_LAPGAN(LapGan_model, n_level, D_criterions, G_criterions,
         D.train()
     one = torch.Tensor([1])
     mone = one * -1
-    if torch.cuda.is_available():
+    if FLAGS.device == 'gpu' and torch.cuda.is_available():
         one = one.cuda()
         mone = mone.cuda()
+    else:
+        import torch_dtu.core.dtu_model as dm
+        one = one.to(dm.dtu_device())
+        mone = mone.to(dm.dtu_device())
         
     for epoch in range(n_epoch):
 
@@ -74,8 +83,10 @@ def train_LAPGAN(LapGan_model, n_level, D_criterions, G_criterions,
                     condi_inputs = None
                     true_inputs = Variable(torch.Tensor(down_imgs))
                     #print('true_inputs: ', true_inputs.size())
-                    if use_gpu:
+                    if FLAGS.device == 'gpu':
                         true_inputs = true_inputs.cuda()
+                    else:
+                        true_inputs = true_inputs.to(dm.dtu_device())
                 else:
                     new_down_imgs = []
                     up_imgs = []
@@ -103,17 +114,22 @@ def train_LAPGAN(LapGan_model, n_level, D_criterions, G_criterions,
 
                     condi_inputs = Variable(torch.Tensor(up_imgs))
                     true_inputs = Variable(torch.Tensor(residual_imgs))
-                    if use_gpu:
+                    if FLAGS.device == 'gpu':
                         condi_inputs = condi_inputs.cuda()
                         true_inputs = true_inputs.cuda()
+                    else:
+                        condi_inputs = condi_inputs.to(dm.dtu_device())
+                        true_inputs = true_inputs.to(dm.dtu_device())
 
                 # get inputs for discriminators from generators and real data
                 if l == 0: noise_dim = 32*32
                 elif l == 1: noise_dim = 16*16
                 else: noise_dim = 100
                 noise = Variable(gen_noise(batch_size, noise_dim))
-                if use_gpu:
+                if FLAGS.device == 'gpu':
                     noise = noise.cuda()
+                else:
+                    noise = noise.to(dm.dtu_device())
                 fake_inputs = LapGan_model.Gen_models[l](noise, condi_inputs)
                 #print(true_inputs.size(), fake_inputs.size())
                 inputs = torch.cat([true_inputs, fake_inputs])
@@ -121,8 +137,10 @@ def train_LAPGAN(LapGan_model, n_level, D_criterions, G_criterions,
                 labels = np.zeros(2 * batch_size)
                 labels[:batch_size] = 1
                 labels = Variable(torch.from_numpy(labels.astype(np.float32)))
-                if use_gpu:
+                if FLAGS.device == 'gpu':
                     labels = labels.cuda()
+                else:
+                    labels = labels.to(dm.dtu_device())
 
                 # Discriminator
                 D_optimizers[l].zero_grad()
@@ -171,14 +189,14 @@ def train_LAPGAN(LapGan_model, n_level, D_criterions, G_criterions,
     print('Finished Training')
 
 
-def run_LAPGAN(n_level=3, n_epoch=1, batch_size=256, use_gpu=True,
+def run_LAPGAN(n_level=3, n_epoch=1, batch_size=256,
                dis_lrs=None, gen_lrs=None, noise_dim=100, n_update_dis=1, 
                n_update_gen=1, n_channel=3, n_sample=32,update_max=None):
     # loading data
     trainloader, testloader = load_dataset(batch_size=batch_size)
 
     # initialize models
-    LapGan_model = LAPGAN(n_level, use_gpu, n_channel)
+    LapGan_model = LAPGAN(n_level, FLAGS.device, n_channel)
 
     # assign loss function and optimizer (Adam) to D and G
     D_criterions = []
@@ -221,6 +239,9 @@ def run_LAPGAN(n_level=3, n_epoch=1, batch_size=256, use_gpu=True,
     save_image(samples, './result/%s epoch%d.png'% (current_time, n_epoch), normalize=True)
     return samples.numpy()
 
+def main(unused_argv):
+    run_LAPGAN(n_epochs = FLAGS.epochs, update_max = FLAGS.update_max)
 
 if __name__ == '__main__':
-    run_LAPGAN(n_epoch=25, update_max=50)
+    app.run(main)
+
