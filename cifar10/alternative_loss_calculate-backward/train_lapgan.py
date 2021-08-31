@@ -24,6 +24,7 @@ FLAGS = flags.FLAGS;
 flags.DEFINE_integer('epochs', default = 25, help = 'number of epochs')
 flags.DEFINE_integer('update_max', default = 500, help = 'update max')
 flags.DEFINE_enum('device', default = 'gpu', enum_values = ['gpu', 'dtu'], help = 'device for training')
+flags.DEFINE_bool('download', default = False, help = 'whether to download dataset')
 
 def load_dataset(batch_size=256, download=False):
     """
@@ -190,7 +191,7 @@ def run_LAPGAN(n_level=3, n_epoch=1, batch_size=256,
                dis_lrs=None, gen_lrs=None, noise_dim=100, n_update_dis=1, 
                n_update_gen=1, n_channel=3, n_sample=32,update_max=None):
     # loading data
-    trainloader, testloader = load_dataset(batch_size=batch_size)
+    trainloader, testloader = load_dataset(batch_size=batch_size, download = FLAGS.download)
 
     # initialize models
     LapGan_model = LAPGAN(n_level, FLAGS.device, n_channel)
