@@ -163,7 +163,7 @@ class LAPGAN(object):
         self.device = device
         self.Dis_models = []
         self.Gen_models = []
-        if self.device == 'gpu':
+        if self.device == 'dtu':
             import torch_dtu.core.dtu_model as dm
 
         #D zero and D one both inputs contain condition information

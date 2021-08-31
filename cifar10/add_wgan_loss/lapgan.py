@@ -157,40 +157,48 @@ class Generator_two(nn.Module):
 
 class LAPGAN(object):
 
-    def __init__(self, n_level, use_gpu=False, n_channel=3):
+    def __init__(self, n_level, device='gpu', n_channel=3):
         self.n_level = n_level
         self.n_channel = n_channel
-        self.use_gpu = use_gpu
+        self.device = device
         self.Dis_models = []
         self.Gen_models = []
+        if self.device == 'dtu':
+            import torch_dtu.core.dtu_model as dm
 
         #D zero and D one both inputs contain condition information
         D_model0 = Discriminator_zero()
-        if use_gpu: D_model0 = D_model0.cuda()
+        if self.device == 'gpu': D_model0 = D_model0.cuda()
+        else: D_model0 = D_model0.to(dm.dtu_device())
         self.Dis_models.append(D_model0)
 
         D_model1 = Discriminator_one()
-        if use_gpu: D_model1 = D_model1.cuda()
+        if self.device == 'gpu': D_model1 = D_model1.cuda()
+        else: D_model1 = D_model1.to(dm.dtu_device())
         self.Dis_models.append(D_model1)
         
         #D two inputs have no condition information
         D_model2 = Discriminator_two()
-        if use_gpu: D_model2 = D_model2.cuda()
+        if self.device == 'gpu': D_model2 = D_model2.cuda()
+        else: D_model2 = D_model2.to(dm.dtu_device())
         self.Dis_models.append(D_model2)
 
 
         #G zero and G one both inputs contain condition information
         G_model0 = Generator_zero()
-        if use_gpu: G_model0 = G_model0.cuda()
+        if self.device == 'gpu': G_model0 = G_model0.cuda()
+        else: G_model0 = G_model0.to(dm.dtu_device())
         self.Gen_models.append(G_model0)
 
         G_model1 = Generator_one()
-        if use_gpu: G_model1 = G_model1.cuda()
+        if self.device == 'gpu': G_model1 = G_model1.cuda()
+        else: G_model1 = G_model1.to(dm.dtu_device())
         self.Gen_models.append(G_model1)
 
         #G two inputs have no condition information
         G_model2 = Generator_two()
-        if use_gpu: G_model2 = G_model2.cuda()
+        if self.device == 'gpu': G_model2 = G_model2.cuda()
+        else: G_model2 = G_model2.to(dm.dtu_device())
         self.Gen_models.append(G_model2)
 
         print(self.Gen_models)
@@ -203,6 +211,8 @@ class LAPGAN(object):
             
         self.outputs = []
         self.generator_outputs = []
+        if self.device == 'gpu':
+            import torch_dtu.core.dtu_device as dm
         for level in range(self.n_level):
             Gen_model = self.Gen_models[self.n_level - level - 1]
 
@@ -211,14 +221,16 @@ class LAPGAN(object):
             elif level == 1: self.noise_dim = 16*16
             else: self.noise_dim = 32*32
             noise = Variable(gen_noise(batchsize, self.noise_dim))
-            if self.use_gpu:
+            if self.device == 'gpu':
                 noise = noise.cuda()
+            else:
+                noise = noise.to(dm.dtu_device())
 
             x = []
             if level == 0:
                 # directly generate images
                 output_imgs = Gen_model.forward(noise)
-                if self.use_gpu:
+                if self.device in ['gpu', 'dtu']:
                     output_imgs = output_imgs.cpu()
                 output_imgs = output_imgs.data.numpy()
                 x.append(output_imgs)
@@ -229,13 +241,17 @@ class LAPGAN(object):
                                       for j in range(self.n_channel)]
                                       for i in range(batchsize)])
                 condi_imgs = Variable(torch.Tensor(input_imgs))
-                if self.use_gpu:
+                if self.device == 'gpu':
                     condi_imgs = condi_imgs.cuda()
+                else:
+                    condi_imgs = condi_imgs.to(dm.dtu_device())
 
                 # generate images with extra information
                 residual_imgs = Gen_model.forward(noise, condi_imgs)
-                if self.use_gpu:
+                if self.device == 'gpu':
                     residual_imgs = residual_imgs.cpu()
+                else:
+                    residual_imgs = residual_imgs.to(dm.dtu_device())
                 output_imgs = residual_imgs.data.numpy() + input_imgs
                 self.generator_outputs.append(residual_imgs.data.numpy())
                 x.append(output_imgs)
