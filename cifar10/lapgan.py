@@ -211,6 +211,8 @@ class LAPGAN(object):
             
         self.outputs = []
         self.generator_outputs = []
+        if self.device == 'gpu':
+            import torch_dtu.core.dtu_device as dm
         for level in range(self.n_level):
             Gen_model = self.Gen_models[self.n_level - level - 1]
 
