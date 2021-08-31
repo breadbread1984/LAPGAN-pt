@@ -153,7 +153,7 @@ def train_LAPGAN(LapGan_model, n_level, D_criterions, G_criterions,
                 D_loss = D_criterions[l](outputs[:, 0], labels)
 
                 if ind % n_update_dis == 0:
-                    D_loss.backward(retain_variables=True)
+                    D_loss.backward(retain_graph=True)
                     D_optimizers[l].step()
 
                 # Generator
