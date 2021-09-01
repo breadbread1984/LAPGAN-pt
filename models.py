@@ -88,12 +88,36 @@ class LAPGAN(object):
       self.gen_0.cuda();
       self.gen_1.cuda();
       self.gen_2.cuda();
-  def generate(self,):
+  def generate(self, batch_size = 4):
     import numpy as np;
-    noise_2 = np.random.normal(loc = 0, scale = 0.1, size = (4,100,));
-    noise_1 = np.random.normal(loc = 0, scale = 0.1, size = (4, 1, 16, 16));
-    noise_0 = np.random.normal(loc = 0, scale = 0.1, size = (4, 1, 32, 32));
-
+    import cv2;
+    noise_0 = torch.from_numpy(np.random.normal(loc = 0, scale = 0.1, size = (batch_size, 1, 32, 32)).astype(np.float32));
+    noise_1 = torch.from_numpy(np.random.normal(loc = 0, scale = 0.1, size = (batch_size, 1, 16, 16)).astype(np.float32));
+    noise_2 = torch.from_numpy(np.random.normal(loc = 0, scale = 0.1, size = (batch_size, 100,)).astype(np.float32));
+    if self.device == 'gpu':
+      noise_0 = noise_0.cuda();
+      noise_1 = noise_1.cuda();
+      noise_2 = noise_2.cuda();
+    # 1) level 1
+    imgs = self.gen_2.forward(noise_2);
+    imgs = imgs.cpu().detach().numpy();
+    # 2) level 2
+    imgs = np.array([[cv2.pyrUp(imgs[b, c,...]) for c in range(3)] for b in range(batch_size)]);
+    inputs = torch.from_numpy(imgs);
+    if self.device == 'gpu':
+      inputs = inputs.cuda();
+    residual = self.gen_1.forward([noise_1, inputs]);
+    residual = residual.cpu().detach().numpy();
+    imgs = residual + imgs;
+    # 3) level 3
+    imgs = np.array([[cv2.pyrUp(imgs[b, c,...]) for c in range(3)] for b in range(batch_size)]);
+    inputs = torch.from_numpy(imgs);
+    if self.device == 'gpu':
+      inputs = inputs.cuda();
+    residual = self.gen_0.forward([noise_0, inputs]);
+    residual = residual.cpu().detach().numpy();
+    imgs = residual + imgs;
+    return imgs;
 
 if __name__ == "__main__":
 
