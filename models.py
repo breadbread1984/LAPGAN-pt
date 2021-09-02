@@ -75,8 +75,14 @@ class Trainer(pl.LightningModule):
   def __init__(self, args):
     super(Trainer, self).__init__();
     self.args = args;
-    self.generators = [GeneratorZero(), GeneratorOne(), GeneratorTwo()];
-    self.discriminators = [DiscriminatorZero(), DiscriminatorOne(), DiscriminatorTwo()];
+    self.gen_0 = GeneratorZero();
+    self.gen_1 = GeneratorOne();
+    self.gen_2 = GeneratorTwo();
+    self.disc_0 = DiscriminatorZero();
+    self.disc_1 = DiscriminatorOne();
+    self.disc_2 = DiscriminatorTwo();
+    self.generators = [self.gen_0, self.gen_1, self.gen_2];
+    self.discriminators = [self.disc_0, self.disc_1, self.disc_2];
     self.criterion = nn.BCELoss();
   def forward(self, x):
     # NOTE: x = (input0, input1, dummy_input2, true_input0, true_input1, true_input2)
