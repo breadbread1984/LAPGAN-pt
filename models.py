@@ -107,9 +107,10 @@ class Trainer(pl.LightningModule):
       disc_losses.append(disc_loss);
     return tuple(gen_loss + disc_loss);
   def training_step(self, batch, batch_idx):
+    from functools import reduce;
     samples, labels = batch;
     losses = self.forward(samples);
-    loss = torch.sum(losses);
+    loss = reduce(torch.add, losses);
     return loss;
   def validation_step(self, batch, batch_idx):
     samples, labels = batch;
@@ -120,7 +121,7 @@ class Trainer(pl.LightningModule):
     self.log('val/disc0_loss', losses[3], prog_bar = True);
     self.log('val/disc1_loss', losses[4], prog_bar = True);
     self.log('val/disc2_loss', losses[5], prog_bar = True);
-    loss = torch.sum(losses);
+    self.log('val/total_loss', torch.sum(losses), prog_bar = True);
   def configure_optimizers(self):
     return torch.optim.Adam([{'params': self.generators[0].parameters(), 'lr': 0.0003},
                              {'params': self.generators[1].parameters(), 'lr': 0.0005},
