@@ -113,6 +113,7 @@ class Trainer(pl.LightningModule):
     loss = reduce(torch.add, losses);
     return loss;
   def validation_step(self, batch, batch_idx):
+    from functools import reduce;
     samples, labels = batch;
     losses = self.forward(samples);
     self.log('val/gen0_loss', losses[0], prog_bar = True);
@@ -121,7 +122,7 @@ class Trainer(pl.LightningModule):
     self.log('val/disc0_loss', losses[3], prog_bar = True);
     self.log('val/disc1_loss', losses[4], prog_bar = True);
     self.log('val/disc2_loss', losses[5], prog_bar = True);
-    self.log('val/total_loss', torch.sum(losses), prog_bar = True);
+    self.log('val/total_loss', reduce(torch.add, losses), prog_bar = True);
   def configure_optimizers(self):
     return torch.optim.Adam([{'params': self.generators[0].parameters(), 'lr': 0.0003},
                              {'params': self.generators[1].parameters(), 'lr': 0.0005},
