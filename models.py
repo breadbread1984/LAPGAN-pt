@@ -77,30 +77,57 @@ class Trainer(pl.LightningModule):
     self.args = args;
     self.generators = [GeneratorZero(), GeneratorOne(), GeneratorTwo()];
     self.discriminators = [DiscriminatorZero(), DiscriminatorOne(), DiscriminatorTwo()];
+    self.criterion = nn.BCELoss();
   def forward(self, x):
     # NOTE: x = (input0, input1, dummy_input2, true_input0, true_input1, true_input2)
+    gen_losses = list();
+    disc_losses = list();
     for idx, generator in enumerate(self.generators):
-      # 1) noise = noise[, condition = coarsed] -> residual
+      # 1) noise = noise[, condition = coarsed] -> fake_residual
       noise = torch.normal(mean = torch.zeros([self.args.batch_size,] + generator.inputs[0].shape[1:]), std = 0.1 * torch.ones([self.args.batch_size,] + generator.inputs[0].shape[1:]));
       if len(generator.inputs) == 2:
         fake_input = generator.forward([noise, x[idx]]);
       else:
         fake_input = generator.forward(noise);
-      # 2) sample = (fake_residuals, real_residuals)[, condition = (coarsed, coarsed)] -> (true|false)
+      # 2) sample = (fake_residual, real_residual)[, condition = (coarsed, coarsed)] -> (true|false)
       samples = torch.cat([fake_input, x[idx + 3]]);
       if len(self.discriminators[idx].inputs) == 2:
         conditions = torch.cat([x[idx], x[idx]]);
         predictions = self.discriminators[idx].forward([samples, conditions]);
       else:
         predictions = self.discriminators[idx].forward(samples);
-      labels = torch.cat([torch.zeros([self.args.batch_size,]), torch.ones([self.args.batch_size])]);
-
+      # 3) generator loss
+      gen_labels = torch.ones([self.args.batch_size,]);
+      gen_loss = self.criterion(predictions[:self.args.batch_size,0], gen_labels);
+      # 4) discriminator loss
+      disc_labels = torch.cat([torch.zeros([self.args.batch_size,]), torch.ones([self.args.batch_size])]);
+      disc_loss = self.criterion(predictions[:,0], disc_labels);
+      # 5) save loss
+      gen_losses.append(gen_loss);
+      disc_losses.append(disc_loss);
+    return tuple(gen_loss + disc_loss);
   def training_step(self, batch, batch_idx):
-    
+    samples, labels = batch;
+    losses = self.forward(samples);
+    loss = torch.sum(losses);
+    return loss;
   def validation_step(self, batch, batch_idx):
-    
+    samples, labels = batch;
+    losses = self.forward(samples);
+    self.log('val/gen0_loss', losses[0], prog_bar = True);
+    self.log('val/gen1_loss', losses[1], prog_bar = True);
+    self.log('val/gen2_loss', losses[2], prog_bar = True);
+    self.log('val/disc0_loss', losses[3], prog_bar = True);
+    self.log('val/disc1_loss', losses[4], prog_bar = True);
+    self.log('val/disc2_loss', losses[5], prog_bar = True);
+    loss = torch.sum(losses);
   def configure_optimizers(self):
-    return torch.optim.Adam(self.parameters(), lr = 3e-4, betas = (0.9, 0.999));
+    return torch.optim.Adam([{'params': self.generators[0].parameters(), 'lr': 0.0003},
+                             {'params': self.generators[1].parameters(), 'lr': 0.0005},
+                             {'params': self.generators[2].parameters(), 'lr': 0.003},
+                             {'params': self.discriminators[0].parameters(), 'lr': 0.0003},
+                             {'params': self.discriminators[1].parameters(), 'lr': 0.0005},
+                             {'params': self.discriminators[2].parameters(), 'lr': 0.003}], lr = 3e-4, betas = (0.5, 0.999));
   @staticmethod
   def add_model_specific_args(parent_parser):
     parser = argparse.ArgumentParser(parents = [parent_parser], add_help = False);
