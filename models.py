@@ -84,7 +84,7 @@ class Trainer(pl.LightningModule):
     disc_losses = list();
     for idx, generator in enumerate(self.generators):
       # 1) noise = noise[, condition = coarsed] -> fake_residual
-      noise = torch.normal(mean = torch.zeros([self.args.batch_size,] + generator.inputs[0].shape[1:]), std = 0.1 * torch.ones([self.args.batch_size,] + generator.inputs[0].shape[1:]));
+      noise = torch.normal(mean = torch.zeros([self.args.batch_size,] + list(generator.inputs[0].shape[1:])), std = 0.1 * torch.ones([self.args.batch_size,] + list(generator.inputs[0].shape[1:])));
       if len(generator.inputs) == 2:
         fake_input = generator.forward([noise, x[idx]]);
       else:
@@ -105,7 +105,7 @@ class Trainer(pl.LightningModule):
       # 5) save loss
       gen_losses.append(gen_loss);
       disc_losses.append(disc_loss);
-    return tuple(gen_loss + disc_loss);
+    return tuple(gen_losses + disc_losses);
   def training_step(self, batch, batch_idx):
     from functools import reduce;
     samples, labels = batch;
@@ -132,6 +132,7 @@ class Trainer(pl.LightningModule):
                              {'params': self.discriminators[2].parameters(), 'lr': 0.003}], lr = 3e-4, betas = (0.5, 0.999));
   @staticmethod
   def add_model_specific_args(parent_parser):
+    import argparse;
     parser = argparse.ArgumentParser(parents = [parent_parser], add_help = False);
     return parser;
 
