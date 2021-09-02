@@ -75,8 +75,26 @@ class Trainer(pl.LightningModule):
   def __init__(self, args):
     super(Trainer, self).__init__();
     self.args = args;
+    self.generators = [GeneratorZero(), GeneratorOne(), GeneratorTwo()];
+    self.discriminators = [DiscriminatorZero(), DiscriminatorOne(), DiscriminatorTwo()];
   def forward(self, x):
-    
+    # NOTE: x = (input0, input1, dummy_input2, true_input0, true_input1, true_input2)
+    for idx, generator in enumerate(self.generators):
+      # 1) noise = noise[, condition = coarsed] -> residual
+      noise = torch.normal(mean = torch.zeros([self.args.batch_size,] + generator.inputs[0].shape[1:]), std = 0.1 * torch.ones([self.args.batch_size,] + generator.inputs[0].shape[1:]));
+      if len(generator.inputs) == 2:
+        fake_input = generator.forward([noise, x[idx]]);
+      else:
+        fake_input = generator.forward(noise);
+      # 2) sample = (fake_residuals, real_residuals)[, condition = (coarsed, coarsed)] -> (true|false)
+      samples = torch.cat([fake_input, x[idx + 3]]);
+      if len(self.discriminators[idx].inputs) == 2:
+        conditions = torch.cat([x[idx], x[idx]]);
+        predictions = self.discriminators[idx].forward([samples, conditions]);
+      else:
+        predictions = self.discriminators[idx].forward(samples);
+      labels = torch.cat([torch.zeros([self.args.batch_size,]), torch.ones([self.args.batch_size])]);
+
   def training_step(self, batch, batch_idx):
     
   def validation_step(self, batch, batch_idx):

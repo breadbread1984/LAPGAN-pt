@@ -14,7 +14,7 @@ def main():
   parser.add_argument('--num_workers', type = int, default = 8);
   parser.add_argument('--download', type = bool, default = False);
   args = parser.parse_args();
-  
+
   dataset = CIFAR10Dataset(args);
   model = Trainer(args);
 
