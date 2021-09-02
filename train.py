@@ -21,7 +21,7 @@ def main():
   
   callbacks = [ModelCheckpoint(monitor = 'val/total_loss', mode = 'min')];
   kwargs = dict();
-  trainer = pl.Trainer.from_argparse_args(args, callbacks = callbacks, max_steps = 1250000, **kwargs);
+  trainer = pl.Trainer.from_argparse_args(args, callbacks = callbacks, max_steps = 25 * 50000 / args.batch_size, **kwargs);
   trainer.fit(model, dataset);
 
 if __name__ == "__main__":
