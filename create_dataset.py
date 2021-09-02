@@ -16,18 +16,21 @@ class MultiScale(object):
   def __call__(self, sample):
     img = sample;
     img = img.numpy(); # img.shape = (channel, h, w)
+    inputs = list();
     outputs = list();
     for i in range(self.n_scale):
       if i == self.n_scale - 1:
+        inputs.append(np.array(0,).astype(np.float32)); # dummy input
         outputs.append(img);
       else:
         downsampled = np.array([cv2.pyrDown(img[c,...]) for c in range(3)]);
         coarsed = np.array([cv2.pyrUp(downsampled[c,...]) for c in range(3)]);
         residual = img - coarsed;
+        inputs.append(coarsed);
         outputs.append(residual);
         # update img for next scale
         img = downsampled;
-    return tuple(outputs);
+    return tuple(inputs + outputs);
 
 class CIFAR10Dataset(pl.LightningDataModule):
   def __init__(self, args):
@@ -45,4 +48,9 @@ class CIFAR10Dataset(pl.LightningDataModule):
 
 if __name__ == "__main__":
   
-  pass;
+  transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)), MultiScale(n_scale = 3)]);
+  trainset = CIFAR10(root = 'cifar10', train = True, download = True, transform = transform);
+  trainset = DataLoader(trainset, batch_size = 4, shuffle = True, num_workers = 2);
+  trainset_iter = iter(trainset);
+  sample, label = next(trainset_iter);
+  print([s.shape for s in sample]);
