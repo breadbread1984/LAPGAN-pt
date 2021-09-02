@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+import numpy as np;
+import cv2;
 import torch;
 from torch.utils.data import Dataset, DataLoader;
 from torchvision import transforms, utils;
@@ -8,14 +10,14 @@ from torchvision.datasets import CIFAR10;
 class MultiScale(object):
   def __init__(self, n_scale = 3):
     self.n_scale = n_scale;
-  def __call__(self, sample):
     # NOTE: force opencv to use single thread to enable multiple worker for dataloader
     cv2.setNumThreads(0);
-    img, label = sample;
+  def __call__(self, sample):
+    img = sample;
     img = img.numpy(); # img.shape = (channel, h, w)
     outputs = list();
-    for i in range(n_scale):
-      if i == n_scale - 1:
+    for i in range(self.n_scale):
+      if i == self.n_scale - 1:
         outputs.append(img);
       else:
         downsampled = np.array([cv2.pyrDown(img[c,...]) for c in range(3)]);
@@ -38,5 +40,5 @@ if __name__ == "__main__":
   
   trainset, testset = load_cifar10(4, download = True);
   trainset_iter = iter(trainset);
-  sample0, sample1, sample2 = next(trainset_iter);
-  print(sample0.shape, sample1.shape, sample2.shape);
+  sample, label = next(trainset_iter);
+  print([s.shape for s in sample]);
