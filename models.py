@@ -2,6 +2,7 @@
 
 import torch;
 from torch import nn;
+import pytorch_lightning as pl;
 from pytorch_functional import Input, FunctionalModel, layers;
 
 def DiscriminatorZero():
@@ -69,6 +70,23 @@ def GeneratorTwo():
   results = results(nn.Linear(results.channels, 3*8*8));
   results = results(layers.ReshapeLayer((-1,3,8,8)));
   return FunctionalModel(inputs = noise, outputs = results);
+
+class Trainer(pl.LightningModule):
+  def __init__(self, args):
+    super(Trainer, self).__init__();
+    self.args = args;
+  def forward(self, x):
+    
+  def training_step(self, batch, batch_idx):
+    
+  def validation_step(self, batch, batch_idx):
+    
+  def configure_optimizers(self):
+    return torch.optim.Adam(self.parameters(), lr = 3e-4, betas = (0.9, 0.999));
+  @staticmethod
+  def add_model_specific_args(parent_parser):
+    parser = argparse.ArgumentParser(parents = [parent_parser], add_help = False);
+    return parser;
 
 class LAPGAN(object):
   def __init__(self, model_dir = 'models', device = 'gpu'):
