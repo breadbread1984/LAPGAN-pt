@@ -68,7 +68,7 @@ def GeneratorTwo():
   results = results(nn.Linear(results.channels, 1200));
   results = results(nn.Sigmoid());
   results = results(nn.Linear(results.channels, 3*8*8));
-  results = results(layers.ReshapeLayer((-1,3,8,8)));
+  results = results(layers.ReshapeLayer((3,8,8)));
   return FunctionalModel(inputs = noise, outputs = results);
 
 class Trainer(pl.LightningModule):
