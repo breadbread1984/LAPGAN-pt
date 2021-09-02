@@ -6,6 +6,7 @@ import torch;
 from torch.utils.data import Dataset, DataLoader;
 from torchvision import transforms, utils;
 from torchvision.datasets import CIFAR10;
+import pytorch_lightning as pl;
 
 class MultiScale(object):
   def __init__(self, n_scale = 3):
@@ -28,13 +29,19 @@ class MultiScale(object):
         img = downsampled;
     return tuple(outputs);
 
-def load_cifar10(batch_size, download = False, num_workers = 2):
-  transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)), MultiScale(n_scale = 3)]);
-  trainset = CIFAR10(root = 'cifar10', train = True, download = download, transform = transform);
-  testset = CIFAR10(root = 'cifar10', train = False, download = download, transform = transform);
-  trainset = DataLoader(trainset, batch_size = batch_size, shuffle = True, num_workers = num_workers);
-  testset = DataLoader(testset, batch_size = batch_size, shuffle = True, num_workers = num_workers);
-  return trainset, testset;
+class CIFAR10Dataset(pl.LightningDataModule):
+  def __init__(self, args):
+    super(CIFAR10Dataset, self).__init__();
+    self.args = args;
+    self.transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)), MultiScale(n_scale = 3)]);
+  def train_dataloader(self,):
+    trainset = CIFAR10(root = 'cifar10', train = True, download = self.args.download, transform = self.transform);
+    trainset = DataLoader(trainset, batch_size = self.args.batch_size, shuffle = True, num_workers = self.args.num_workers);
+    return trainset;
+  def test_dataloader(self,):
+    testset = CIFAR10(root = 'cifar10', train = False, download = self.args.download, transform = self.transform);
+    testset = DataLoader(testset, batch_size = self.args.batch_size, shuffle = True, num_workers = self.args.num_workers);
+    return testset;
 
 if __name__ == "__main__":
   
