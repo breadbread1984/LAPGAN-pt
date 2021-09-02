@@ -2,6 +2,7 @@
 
 import argparse;
 import pytorch_lightning as pl;
+from pytorch_lightning.callbacks import ModelCheckpoint;
 from models import Trainer;
 from create_dataset import CIFAR10Dataset;
 
@@ -17,6 +18,11 @@ def main():
 
   dataset = CIFAR10Dataset(args);
   model = Trainer(args);
+  
+  callbacks = [ModelCheckpoint(monitor = 'val/total_loss', mode = 'min')];
+  kwargs = dict();
+  trainer = pl.Trainer.from_argparse_args(args, callbacks = callbacks, max_steps = 1250000, **kwargs);
+  trainer.fit(model, dataset);
 
 if __name__ == "__main__":
   main();
