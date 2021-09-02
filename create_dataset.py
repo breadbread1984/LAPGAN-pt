@@ -45,7 +45,4 @@ class CIFAR10Dataset(pl.LightningDataModule):
 
 if __name__ == "__main__":
   
-  trainset, testset = load_cifar10(4, download = True);
-  trainset_iter = iter(trainset);
-  sample, label = next(trainset_iter);
-  print([s.shape for s in sample]);
+  pass;
