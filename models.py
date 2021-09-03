@@ -129,9 +129,9 @@ class Trainer(pl.LightningModule):
     return torch.optim.Adam([{'params': self.generators[0].parameters(), 'lr': 0.0003},
                              {'params': self.generators[1].parameters(), 'lr': 0.0005},
                              {'params': self.generators[2].parameters(), 'lr': 0.003},
-                             {'params': self.discriminators[0].parameters(), 'lr': 0.0003},
-                             {'params': self.discriminators[1].parameters(), 'lr': 0.0005},
-                             {'params': self.discriminators[2].parameters(), 'lr': 0.003}], lr = 3e-4, betas = (0.5, 0.999));
+                             {'params': self.discriminators[0].parameters(), 'lr': 0.0001},
+                             {'params': self.discriminators[1].parameters(), 'lr': 0.0001},
+                             {'params': self.discriminators[2].parameters(), 'lr': 0.0001}], lr = 3e-4, betas = (0.5, 0.999));
   @staticmethod
   def add_model_specific_args(parent_parser):
     import argparse;
