@@ -121,12 +121,12 @@ class Trainer(pl.LightningModule):
     batch_dictionary = {
       'loss': loss,
       'log': {
-        'train/gen0_loss': losses[0],
-        'train/gen1_loss': losses[1],
-        'train/gen2_loss': losses[2],
-        'train/disc0_loss': losses[3],
-        'train/disc1_loss': losses[4],
-        'train/disc2_loss': losses[5]
+        'train/gen0_loss': losses[0].detach(),
+        'train/gen1_loss': losses[1].detach(),
+        'train/gen2_loss': losses[2].detach(),
+        'train/disc0_loss': losses[3].detach(),
+        'train/disc1_loss': losses[4].detach(),
+        'train/disc2_loss': losses[5].detach()
       }
     };
     return batch_dictionary;
