@@ -118,29 +118,25 @@ class Trainer(pl.LightningModule):
     samples, labels = batch;
     losses = self.forward(samples);
     loss = reduce(torch.add, losses);
-    batch_dictionary = {
-      'loss': loss,
-      'log': {
-        'train/gen0_loss': losses[0].detach(),
-        'train/gen1_loss': losses[1].detach(),
-        'train/gen2_loss': losses[2].detach(),
-        'train/disc0_loss': losses[3].detach(),
-        'train/disc1_loss': losses[4].detach(),
-        'train/disc2_loss': losses[5].detach()
-      }
-    };
-    return batch_dictionary;
+    self.log('val/gen0_loss', losses[0].detach(), prog_bar = True);
+    self.log('val/gen1_loss', losses[1].detach(), prog_bar = True);
+    self.log('val/gen2_loss', losses[2].detach(), prog_bar = True);
+    self.log('val/disc0_loss', losses[3].detach(), prog_bar = True);
+    self.log('val/disc1_loss', losses[4].detach(), prog_bar = True);
+    self.log('val/disc2_loss', losses[5].detach(), prog_bar = True);
+    self.log('val/total_loss', loss.detach(), prog_bar = True);
+    return loss;
   def validation_step(self, batch, batch_idx):
     from functools import reduce;
     samples, labels = batch;
     losses = self.forward(samples);
-    self.log('val/gen0_loss', losses[0], prog_bar = True);
-    self.log('val/gen1_loss', losses[1], prog_bar = True);
-    self.log('val/gen2_loss', losses[2], prog_bar = True);
-    self.log('val/disc0_loss', losses[3], prog_bar = True);
-    self.log('val/disc1_loss', losses[4], prog_bar = True);
-    self.log('val/disc2_loss', losses[5], prog_bar = True);
-    self.log('val/total_loss', reduce(torch.add, losses), prog_bar = True);
+    self.log('val/gen0_loss', losses[0].detach(), prog_bar = True);
+    self.log('val/gen1_loss', losses[1].detach(), prog_bar = True);
+    self.log('val/gen2_loss', losses[2].detach(), prog_bar = True);
+    self.log('val/disc0_loss', losses[3].detach(), prog_bar = True);
+    self.log('val/disc1_loss', losses[4].detach(), prog_bar = True);
+    self.log('val/disc2_loss', losses[5].detach(), prog_bar = True);
+    self.log('val/total_loss', reduce(torch.add, losses).detach(), prog_bar = True);
   def configure_optimizers(self):
     return torch.optim.Adam([{'params': self.generators[0].parameters(), 'lr': 0.0003},
                              {'params': self.generators[1].parameters(), 'lr': 0.0005},
