@@ -80,16 +80,22 @@ class Trainer(pl.LightningModule):
     self.criterion = nn.BCELoss();
   def forward(self, x):
     # NOTE: x = (input0, input1, dummy_input2, true_input0, true_input1, true_input2)
+    # NOTE: real batch size is not always equals to self.args.batch_size, for example, the last batch of an epochs always less than self.args.batch_size
+    batch_size = x[0].shape[0];
     gen_losses = list();
     disc_losses = list();
     for idx, generator in enumerate(self.generators):
       # 1) noise = noise[, condition = coarsed] -> fake_residual
-      noise = torch.normal(mean = torch.zeros([self.args.batch_size,] + list(generator.inputs[0].shape[1:])), std = 0.1 * torch.ones([self.args.batch_size,] + list(generator.inputs[0].shape[1:])));
+      noise = torch.normal(mean = torch.zeros([batch_size,] + list(generator.inputs[0].shape[1:])), std = 0.1 * torch.ones([batch_size,] + list(generator.inputs[0].shape[1:])));
       coarse = x[idx];
-      if len(generator.inputs) == 2:
-        fake = generator([noise, coarse]); # fake laplacian
-      else:
-        fake = generator(noise); # fake coarse image
+      try:
+        if len(generator.inputs) == 2:
+          fake = generator([noise, coarse]); # fake laplacian
+        else:
+          fake = generator(noise); # fake coarse image
+      except:
+        import pdb;
+        pdb.set_trace();
       # 2) sample = (fake_residual, real_residual)[, condition = (coarsed, coarsed)] -> (true|false)
       real = x[idx + 3];
       samples = torch.cat([fake, real]);
@@ -99,10 +105,10 @@ class Trainer(pl.LightningModule):
       else:
         predictions = self.discriminators[idx](samples);
       # 3) generator loss
-      gen_labels = torch.ones([self.args.batch_size,]);
-      gen_loss = self.criterion(predictions[:self.args.batch_size,0], gen_labels);
+      gen_labels = torch.ones([batch_size,]);
+      gen_loss = self.criterion(predictions[:batch_size,0], gen_labels);
       # 4) discriminator loss
-      disc_labels = torch.cat([torch.zeros([self.args.batch_size,]), torch.ones([self.args.batch_size])]);
+      disc_labels = torch.cat([torch.zeros([batch_size,]), torch.ones([batch_size])]);
       disc_loss = self.criterion(predictions[:,0], disc_labels);
       # 5) save loss
       gen_losses.append(gen_loss);
