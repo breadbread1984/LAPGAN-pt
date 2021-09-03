@@ -22,7 +22,7 @@ def main():
   
   callbacks = [ModelCheckpoint(every_n_train_steps = 10)];
   kwargs = dict();
-  trainer = pl.Trainer.from_argparse_args(args, callbacks = callbacks, max_steps = 25 * 50000 / args.batch_size, **kwargs);
+  trainer = pl.Trainer.from_argparse_args(args, callbacks = callbacks, max_steps = 25 * 50000 / args.batch_size, log_save_interval = 10, **kwargs);
   trainer.fit(model, dataset);
 
 if __name__ == "__main__":
