@@ -22,7 +22,7 @@ def main():
   model = Trainer(args) if args.checkpoint is None else Trainer.load_from_checkpoint(args = args, checkpoint_path = args.checkpoint);
   
   callbacks = [ModelCheckpoint(every_n_train_steps = 10)];
-  logger = TensorBoardLogger('tb_logs', name = 'LAPGAN');
+  logger = TensorBoardLogger('tb_logs', name = 'LAPGAN', log_graph = True);
   kwargs = dict();
   trainer = pl.Trainer.from_argparse_args(args, callbacks = callbacks, max_steps = 25 * 50000 / args.batch_size, logger = logger, **kwargs);
   trainer.fit(model, dataset);
