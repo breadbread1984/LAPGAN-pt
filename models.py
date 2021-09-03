@@ -87,6 +87,7 @@ class Trainer(pl.LightningModule):
     for idx, generator in enumerate(self.generators):
       # 1) noise = noise[, condition = coarsed] -> fake_residual
       noise = torch.normal(mean = torch.zeros([batch_size,] + list(generator.inputs[0].shape[1:])), std = 0.1 * torch.ones([batch_size,] + list(generator.inputs[0].shape[1:])));
+      if self.args.gpus > 1: noise = noise.cuda();
       coarse = x[idx];
       if len(generator.inputs) == 2:
         fake = generator([noise, coarse]); # fake laplacian
