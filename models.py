@@ -118,15 +118,13 @@ class Trainer(pl.LightningModule):
     samples, labels = batch;
     losses = self.forward(samples);
     loss = reduce(torch.add, losses);
-    self.logger.experimental.add_scalar('train/gen0_loss', losses[0].detach(), batch_idx);
-    self.logger.experimental.add_scalar('train/gen1_loss', losses[1].detach(), batch_idx);
-    self.logger.experimental.add_scalar('train/gen2_loss', losses[2].detach(), batch_idx);
-    self.logger.experimental.add_scalar('train/disc0_loss', losses[3].detach(), batch_idx);
-    self.logger.experimental.add_scalar('train/disc1_loss', losses[4].detach(), batch_idx);
-    self.logger.experimental.add_scalar('train/disc2_loss', losses[5].detach(), batch_idx);
-    return {
-      "loss": loss,
-    };
+    self.logger.add_scalar('train/gen0_loss', losses[0].detach(), batch_idx);
+    self.logger.add_scalar('train/gen1_loss', losses[1].detach(), batch_idx);
+    self.logger.add_scalar('train/gen2_loss', losses[2].detach(), batch_idx);
+    self.logger.add_scalar('train/disc0_loss', losses[3].detach(), batch_idx);
+    self.logger.add_scalar('train/disc1_loss', losses[4].detach(), batch_idx);
+    self.logger.add_scalar('train/disc2_loss', losses[5].detach(), batch_idx);
+    return loss;
   def validation_step(self, batch, batch_idx):
     from functools import reduce;
     samples, labels = batch;
