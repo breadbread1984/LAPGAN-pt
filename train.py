@@ -14,10 +14,11 @@ def main():
   parser.add_argument('--batch_size', type = int, default = 256);
   parser.add_argument('--num_workers', type = int, default = 8);
   parser.add_argument('--download', type = bool, default = False);
+  parser.add_argument('--checkpoint', type = str, default = None);
   args = parser.parse_args();
 
   dataset = CIFAR10Dataset(args);
-  model = Trainer(args);
+  model = Trainer(args) if args.checkpoint is None else Trainer.load_from_checkpoint(args = args, checkpoint_path = args.checkpoint);;
   
   callbacks = [ModelCheckpoint(every_n_train_steps = 10)];
   kwargs = dict();
