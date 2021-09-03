@@ -6,9 +6,9 @@ import pytorch_lightning as pl;
 from pytorch_functional import Input, FunctionalModel, layers;
 
 def DiscriminatorZero():
-  high_pass = Input(shape = (3,32,32)); # laplacian response
-  low_pass = Input(shape = (3,32,32)); # coarsed high resolution image
-  results = high_pass(layers.AddOpLayer(), low_pass); # results.shape = (batch, 3, 32, 32)
+  laplacian = Input(shape = (3,32,32)); # laplacian response
+  coarse = Input(shape = (3,32,32)); # coarsed high resolution image
+  results = laplacian(layers.AddOpLayer(), coarse); # results.shape = (batch, 3, 32, 32)
   results = results(nn.Conv2d(results.channels, 128, kernel_size = (5,5)))(nn.LeakyReLU());
   results = results(nn.BatchNorm2d(results.channels));
   results = results(nn.Conv2d(results.channels, 128, kernel_size = (5,5), stride = (2,2)))(nn.LeakyReLU());
@@ -19,9 +19,9 @@ def DiscriminatorZero():
   return FunctionalModel(inputs = (high_pass, low_pass), outputs = results);
 
 def DiscriminatorOne():
-  high_pass = Input(shape = (3,16,16)); # laplacian response
-  low_pass = Input(shape = (3,16,16)); # coarsed high resolution image
-  results = high_pass(layers.AddOpLayer(), low_pass); # results.shape = (batch, 3, 16, 16)
+  laplacian = Input(shape = (3,16,16)); # laplacian response
+  coarse = Input(shape = (3,16,16)); # coarsed high resolution image
+  results = laplacian(layers.AddOpLayer(), coarse); # results.shape = (batch, 3, 16, 16)
   results = results(nn.Conv2d(results.channels, 64, kernel_size = (5,5)))(nn.LeakyReLU());
   results = results(nn.BatchNorm2d(results.channels));
   results = results(nn.Conv2d(results.channels, 64, kernel_size = (5,5), stride = (2,2)))(nn.LeakyReLU());
@@ -32,35 +32,35 @@ def DiscriminatorOne():
   return FunctionalModel(inputs = (high_pass, low_pass), outputs = results);
 
 def DiscriminatorTwo():
-  low_pass = Input(shape = (3,8,8)); # low_pass.shape = (batch, 3, 8, 8)
-  results = low_pass(nn.Flatten());
+  coarse = Input(shape = (3,8,8)); # low_pass.shape = (batch, 3, 8, 8)
+  results = coarse(nn.Flatten());
   results = results(nn.Linear(results.channels, 600))(nn.LeakyReLU());
   results = results(nn.Linear(results.channels, 600))(nn.LeakyReLU());
   results = results(nn.Linear(results.channels, 1));
   results = results(nn.Sigmoid());
-  return FunctionalModel(inputs = low_pass, outputs = results);
+  return FunctionalModel(inputs = coarse, outputs = results);
 
 def GeneratorZero():
   noise = Input(shape = (1,32,32));
-  low_pass = Input(shape = (3,32,32));
-  results = low_pass(layers.ConcatLayer(dim = 1), noise);
+  coarse = Input(shape = (3,32,32));
+  results = coarse(layers.ConcatLayer(dim = 1), noise);
   results = results(nn.Conv2d(results.channels, 128, kernel_size = (3,3), padding = 1))(nn.ReLU());
   results = results(nn.BatchNorm2d(results.channels));
   results = results(nn.Conv2d(results.channels, 128, kernel_size = (3,3), padding = 1))(nn.ReLU());
   results = results(nn.BatchNorm2d(results.channels));
-  results = results(nn.Conv2d(results.channels, 3, kernel_size = (3,3), padding = 1));
-  return FunctionalModel(inputs = (noise, low_pass), outputs = results);
+  laplacian = results(nn.Conv2d(results.channels, 3, kernel_size = (3,3), padding = 1));
+  return FunctionalModel(inputs = (noise, coarse), outputs = laplacian);
 
 def GeneratorOne():
   noise = Input(shape = (1,16,16));
-  low_pass = Input(shape = (3,16,16));
-  results = low_pass(layers.ConcatLayer(dim = 1), noise);
+  coarse = Input(shape = (3,16,16));
+  results = coarse(layers.ConcatLayer(dim = 1), noise);
   results = results(nn.Conv2d(results.channels, 64, kernel_size = (3,3), padding = 1))(nn.ReLU());
   results = results(nn.BatchNorm2d(results.channels));
   results = results(nn.Conv2d(results.channels, 64, kernel_size = (3,3), padding = 1))(nn.ReLU());
   results = results(nn.BatchNorm2d(results.channels));
-  results = results(nn.Conv2d(results.channels, 3, kernel_size = (3,3), padding = 1));
-  return FunctionalModel(inputs = (noise, low_pass), outputs = results);
+  laplacian = results(nn.Conv2d(results.channels, 3, kernel_size = (3,3), padding = 1));
+  return FunctionalModel(inputs = (noise, coarse), outputs = laplacian);
 
 def GeneratorTwo():
   noise = Input(shape = (100,));
@@ -68,8 +68,8 @@ def GeneratorTwo():
   results = results(nn.Linear(results.channels, 1200));
   results = results(nn.Sigmoid());
   results = results(nn.Linear(results.channels, 3*8*8));
-  results = results(layers.ReshapeLayer((3,8,8)));
-  return FunctionalModel(inputs = noise, outputs = results);
+  coarse = results(layers.ReshapeLayer((3,8,8)));
+  return FunctionalModel(inputs = noise, outputs = coarse);
 
 class Trainer(pl.LightningModule):
   def __init__(self, args):
@@ -85,17 +85,19 @@ class Trainer(pl.LightningModule):
     for idx, generator in enumerate(self.generators):
       # 1) noise = noise[, condition = coarsed] -> fake_residual
       noise = torch.normal(mean = torch.zeros([self.args.batch_size,] + list(generator.inputs[0].shape[1:])), std = 0.1 * torch.ones([self.args.batch_size,] + list(generator.inputs[0].shape[1:])));
+      coarse = x[idx];
       if len(generator.inputs) == 2:
-        fake_input = generator.forward([noise, x[idx]]);
+        fake = generator([noise, coarse]); # fake laplacian
       else:
-        fake_input = generator.forward(noise);
+        fake = generator(noise); # fake coarse image
       # 2) sample = (fake_residual, real_residual)[, condition = (coarsed, coarsed)] -> (true|false)
-      samples = torch.cat([fake_input, x[idx + 3]]);
+      real = x[idx + 3];
+      samples = torch.cat([fake, real]);
       if len(self.discriminators[idx].inputs) == 2:
-        conditions = torch.cat([x[idx], x[idx]]);
-        predictions = self.discriminators[idx].forward([samples, conditions]);
+        conditions = torch.cat([coarse, coarse]);
+        predictions = self.discriminators[idx]([samples, conditions]);
       else:
-        predictions = self.discriminators[idx].forward(samples);
+        predictions = self.discriminators[idx](samples);
       # 3) generator loss
       gen_labels = torch.ones([self.args.batch_size,]);
       gen_loss = self.criterion(predictions[:self.args.batch_size,0], gen_labels);
