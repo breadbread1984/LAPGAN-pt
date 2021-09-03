@@ -15,6 +15,6 @@ pip3 install -r requirements.txt
 train with the following command
 
 ```shell
-python3 train.py --batch_size=<batch size> --num_workers=<workers> --download=(True|False)
+python3 train.py --batch_size=<batch size> --num_workers=<workers> --download=(True|False) [--gpus=<gpu number>]
 ```
 
