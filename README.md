@@ -18,3 +18,12 @@ train with the following command
 python3 train.py --batch_size=<batch size> --num_workers=<workers> --download=(True|False) [--gpus=<gpu number>]
 ```
 
+## how to save model from checkpoint
+
+save model with the following command
+
+```shell
+python3 save_model.py --checkpoint=<path/to/ckpt/file>
+```
+
+the saved models will be placed under directory models.
