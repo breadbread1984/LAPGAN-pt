@@ -88,14 +88,10 @@ class Trainer(pl.LightningModule):
       # 1) noise = noise[, condition = coarsed] -> fake_residual
       noise = torch.normal(mean = torch.zeros([batch_size,] + list(generator.inputs[0].shape[1:])), std = 0.1 * torch.ones([batch_size,] + list(generator.inputs[0].shape[1:])));
       coarse = x[idx];
-      try:
-        if len(generator.inputs) == 2:
-          fake = generator([noise, coarse]); # fake laplacian
-        else:
-          fake = generator(noise); # fake coarse image
-      except:
-        import pdb;
-        pdb.set_trace();
+      if len(generator.inputs) == 2:
+        fake = generator([noise, coarse]); # fake laplacian
+      else:
+        fake = generator(noise); # fake coarse image
       # 2) sample = (fake_residual, real_residual)[, condition = (coarsed, coarsed)] -> (true|false)
       real = x[idx + 3];
       samples = torch.cat([fake, real]);
