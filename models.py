@@ -118,13 +118,17 @@ class Trainer(pl.LightningModule):
     samples, labels = batch;
     losses = self.forward(samples);
     loss = reduce(torch.add, losses);
-    self.log('val/gen0_loss', losses[0].detach(), prog_bar = True);
-    self.log('val/gen1_loss', losses[1].detach(), prog_bar = True);
-    self.log('val/gen2_loss', losses[2].detach(), prog_bar = True);
-    self.log('val/disc0_loss', losses[3].detach(), prog_bar = True);
-    self.log('val/disc1_loss', losses[4].detach(), prog_bar = True);
-    self.log('val/disc2_loss', losses[5].detach(), prog_bar = True);
-    self.log('val/total_loss', loss.detach(), prog_bar = True);
+    return {
+      "train_loss": loss,
+      "log": {
+        'train/gen0_loss': losses[0].detach(),
+        'train/gen1_loss': losses[1].detach(),
+        'train/gen2_loss': losses[2].detach(),
+        'train/disc0_loss': losses[3].detach(),
+        'train/disc1_loss': losses[4].detach(),
+        'train/disc2_loss': losses[5].detach(),
+      }
+    }
     return loss;
   def validation_step(self, batch, batch_idx):
     from functools import reduce;
