@@ -103,9 +103,11 @@ class Trainer(pl.LightningModule):
         predictions = self.discriminators[idx](samples);
       # 3) generator loss
       gen_labels = torch.ones([batch_size,]);
+      if self.args.gpus > 0: gen_labels = gen_labels.cuda();
       gen_loss = self.criterion(predictions[:batch_size,0], gen_labels);
       # 4) discriminator loss
       disc_labels = torch.cat([torch.zeros([batch_size,]), torch.ones([batch_size,])]);
+      if self.args.gpus > 0: disc_labels = disc_labels.cuda();
       disc_loss = self.criterion(predictions[:,0], disc_labels);
       # 5) save loss
       gen_losses.append(gen_loss);
