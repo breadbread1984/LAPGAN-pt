@@ -18,6 +18,14 @@ train with the following command
 python3 train.py --batch_size=<batch size> --num_workers=<workers> --download=(True|False) [--gpus=<gpu number>]
 ```
 
+if you train with GPU, --gpus must be over zero.
+
+if you want to train with pretrained checkpoint, run with command
+
+```shell
+python3 train.py --batch_size=<batch size> --num_workers=<workers> --download=(True|False) --checkpoint=<path/to/ckpt/file> [--gpus=<gpu number>]
+```
+
 ## how to save model from checkpoint
 
 save model with the following command
