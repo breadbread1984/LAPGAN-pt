@@ -24,7 +24,7 @@ def main():
   callbacks = [ModelCheckpoint(every_n_train_steps = 10)];
   logger = TensorBoardLogger('tb_logs', name = 'LAPGAN');
   kwargs = dict();
-  trainer = pl.Trainer.from_argparse_args(args, callbacks = callbacks, max_steps = 25 * 50000 / args.batch_size, log_save_interval = 10, logger = logger, **kwargs);
+  trainer = pl.Trainer.from_argparse_args(args, callbacks = callbacks, max_steps = 25 * 50000 / args.batch_size, logger = logger, **kwargs);
   trainer.fit(model, dataset);
 
 if __name__ == "__main__":
