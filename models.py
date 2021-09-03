@@ -104,7 +104,7 @@ class Trainer(pl.LightningModule):
       gen_labels = torch.ones([batch_size,]);
       gen_loss = self.criterion(predictions[:batch_size,0], gen_labels);
       # 4) discriminator loss
-      disc_labels = torch.cat([torch.zeros([batch_size,]), torch.ones([batch_size])]);
+      disc_labels = torch.cat([torch.zeros([batch_size,]), torch.ones([batch_size,])]);
       disc_loss = self.criterion(predictions[:,0], disc_labels);
       # 5) save loss
       gen_losses.append(gen_loss);
