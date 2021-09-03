@@ -166,14 +166,14 @@ class LAPGAN(object):
       if self.device == 'gpu':
         noise = noise.cuda();
       if len(model.inputs) == 1:
-        imgs = model.forward(noise);
+        imgs = model(noise);
         imgs = imgs.cpu().detach().numpy();
       else:
         imgs = np.array([[cv2.pyrUp(imgs[b, c,...]) for c in range(3)] for b in range(batch_size)]);
         inputs = torch.from_numpy(imgs);
         if self.device == 'gpu':
           inputs = inputs.cuda();
-        residual = model.forward([noise, inputs]);
+        residual = model([noise, inputs]);
         residual = residual.cpu().detach().numpy();
         imgs = residual + imgs;
     return imgs;
