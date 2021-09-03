@@ -16,7 +16,7 @@ def DiscriminatorZero():
   results = results(nn.Flatten());
   results = results(nn.Linear(results.channels, 1));
   results = results(nn.Sigmoid())
-  return FunctionalModel(inputs = (high_pass, low_pass), outputs = results);
+  return FunctionalModel(inputs = (laplacian, coarse), outputs = results);
 
 def DiscriminatorOne():
   laplacian = Input(shape = (3,16,16)); # laplacian response
@@ -29,7 +29,7 @@ def DiscriminatorOne():
   results = results(nn.Flatten());
   results = results(nn.Linear(results.channels, 1));
   results = results(nn.Sigmoid());
-  return FunctionalModel(inputs = (high_pass, low_pass), outputs = results);
+  return FunctionalModel(inputs = (laplacian, coarse), outputs = results);
 
 def DiscriminatorTwo():
   coarse = Input(shape = (3,8,8)); # low_pass.shape = (batch, 3, 8, 8)
