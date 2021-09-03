@@ -128,7 +128,7 @@ class Trainer(pl.LightningModule):
         'train/disc1_loss': losses[4].detach(),
         'train/disc2_loss': losses[5].detach(),
       }
-    }
+    };
   def validation_step(self, batch, batch_idx):
     from functools import reduce;
     samples, labels = batch;
