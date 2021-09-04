@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+from os import mkdir;
+from os.path import exists, join;
 import argparse;
 import pytorch_lightning as pl;
 from pytorch_lightning.callbacks import ModelCheckpoint;
@@ -26,6 +28,10 @@ def main():
   kwargs = dict();
   trainer = pl.Trainer.from_argparse_args(args, callbacks = callbacks, max_steps = 25 * 50000 / args.batch_size, logger = logger, **kwargs);
   trainer.fit(model, dataset);
+  if not exists('models'): mkdir('models');
+  save(model.generators[0], join('models', 'gen_0.pth'));
+  save(model.generators[1], join('models', 'gen_1.pth'));
+  save(model.generators[2], join('models', 'gen_2.pth'));
 
 if __name__ == "__main__":
   main();
