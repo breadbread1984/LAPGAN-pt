@@ -169,6 +169,7 @@ class LAPGAN(object):
   def generate(self, batch_size = 4):
     import numpy as np;
     import cv2;
+    outputs = list();
     for model in reversed(self.models):
       noise = torch.from_numpy(np.random.normal(loc = 0, scale = 0.1, size = [batch_size,] + list(model.inputs[0].shape[1:])).astype(np.float32));
       if self.device == 'gpu':
@@ -176,6 +177,7 @@ class LAPGAN(object):
       if len(model.inputs) == 1:
         imgs = model(noise);
         imgs = imgs.cpu().detach().numpy();
+        outputs.append(imgs);
       else:
         imgs = np.array([[cv2.pyrUp(imgs[b, c,...]) for c in range(3)] for b in range(batch_size)]);
         inputs = torch.from_numpy(imgs);
@@ -184,7 +186,8 @@ class LAPGAN(object):
         residual = model([noise, inputs]);
         residual = residual.cpu().detach().numpy();
         imgs = residual + imgs;
-    return imgs;
+        outputs.append(imgs);
+    return tuple(outputs);
 
 if __name__ == "__main__":
 
