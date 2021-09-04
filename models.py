@@ -78,6 +78,7 @@ class Trainer(pl.LightningModule):
     self.generators = nn.ModuleList([GeneratorZero(), GeneratorOne(), GeneratorTwo()]);
     self.discriminators = nn.ModuleList([DiscriminatorZero(), DiscriminatorOne(), DiscriminatorTwo()]);
     self.criterion = nn.BCELoss();
+    self.logger.log_graph(self);
   def forward(self, x):
     # NOTE: x = (input0, input1, dummy_input2, true_input0, true_input1, true_input2)
     # NOTE: real batch size is not always equals to self.args.batch_size, for example, the last batch of an epochs always less than self.args.batch_size
@@ -125,7 +126,7 @@ class Trainer(pl.LightningModule):
       'train/disc0_loss': losses[3].detach(), 
       'train/disc1_loss': losses[4].detach(), 
       'train/disc2_loss': losses[5].detach(),
-    }, step = batch_idx);
+    }, step = self.global_step);
     return loss;
   def validation_step(self, batch, batch_idx):
     from functools import reduce;
