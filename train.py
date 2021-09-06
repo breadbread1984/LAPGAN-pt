@@ -16,7 +16,6 @@ def main():
   parser.add_argument('--num_workers', type = int, default = 8);
   parser.add_argument('--download', type = bool, default = False);
   parser.add_argument('--checkpoint', type = str, default = None);
-  parser.add_argument('--gpus', type = int, default = 1);
   args = parser.parse_args();
 
   dataset = CIFAR10Dataset(args);
