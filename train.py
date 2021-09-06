@@ -16,6 +16,7 @@ def main():
   parser.add_argument('--num_workers', type = int, default = 8);
   parser.add_argument('--download', type = bool, default = False);
   parser.add_argument('--checkpoint', type = str, default = None);
+  parser.add_argument('--gpus', type = int, default = 1);
   args = parser.parse_args();
 
   dataset = CIFAR10Dataset(args);
@@ -24,7 +25,7 @@ def main():
   callbacks = [ModelCheckpoint(every_n_train_steps = 10)];
   logger = TensorBoardLogger('tb_logs', name = 'LAPGAN', log_graph = True);
   kwargs = dict();
-  trainer = pl.Trainer(val_check_interval = 0.1, callbacks = callbacks, logger = logger, **kwargs);
+  trainer = pl.Trainer(val_check_interval = 0.1, callbacks = callbacks, logger = logger, gpus = args.gpus, **kwargs);
   trainer.fit(model, dataset);
 
 if __name__ == "__main__":
