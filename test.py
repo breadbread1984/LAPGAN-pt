@@ -10,14 +10,16 @@ flags.DEFINE_enum('device', default = 'cpu', enum_values = ['cpu', 'gpu'], help 
 
 def main(unused_argv):
   lapgan = LAPGAN(device = FLAGS.device);
-  cv2.namedWindow('generate', cv2.WINDOW_NORMAL);
+  for i in range(3):
+    cv2.namedWindow(str(i), cv2.WINDOW_NORMAL);
   while True:
-    imgs = lapgan.generate(batch_size = 1); # imgs.shape = (batch, channels, height, width)
-    imgs = np.transpose(imgs, (0, 2, 3, 1));
-    img = np.squeeze(imgs, axis = 0); # img.shape = (height, width, 3)
+    imgs = lapgan.generate(batch_size = 1); # img.shape = (batch, channels, height, width)
+    imgs = [np.transpose(img, (0, 2, 3, 1)) for img in imgs]; # img.shape = (batch, height, width, channels)
+    imgs = [np.squeeze(img, axis = 0) for img in imgs]; # img.shape = (height, width, channels)
     # NOTE: img range in [-1, +1]
-    img = (255. * (img * 0.5 + 0.5)).astype(np.uint8);
-    cv2.imshow('generate', img);
+    imgs = [(255. * (img * 0.5 + 0.5)).astype(np.uint8) for img in imgs];
+    for i in range(3):
+      cv2.imshow(str(i), imgs[i]);
     cv2.waitKey();
 
 if __name__ == "__main__":

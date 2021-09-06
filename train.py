@@ -1,6 +1,9 @@
 #!/usr/bin/python3
 
+from os import mkdir;
+from os.path import exists, join;
 import argparse;
+from torch import save;
 import pytorch_lightning as pl;
 from pytorch_lightning.callbacks import ModelCheckpoint;
 from pytorch_lightning.loggers import TensorBoardLogger;
@@ -27,6 +30,10 @@ def main():
   kwargs = dict();
   trainer = pl.Trainer(max_epochs = args.epochs, check_val_every_n_epoch = 1, callbacks = callbacks, logger = logger, gpus = args.gpus, **kwargs);
   trainer.fit(model, dataset);
+  if not exists('models'): mkdir('models');
+  save(model.generators[0], join('models', 'gen_0.pth'));
+  save(model.generators[1], join('models', 'gen_1.pth'));
+  save(model.generators[2], join('models', 'gen_2.pth'));
 
 if __name__ == "__main__":
   main();
