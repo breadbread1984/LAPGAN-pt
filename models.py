@@ -87,7 +87,7 @@ class Trainer(pl.LightningModule):
     for idx, generator in enumerate(self.generators):
       # 1) noise = noise[, condition = coarsed] -> fake_residual
       noise = torch.normal(mean = torch.zeros([batch_size,] + list(generator.inputs[0].shape[1:])), std = 0.1 * torch.ones([batch_size,] + list(generator.inputs[0].shape[1:])));
-      if self.args.gpus > 0: noise = noise.cuda();
+      noise = noise.to(self.device);
       coarse = x[idx];
       if len(generator.inputs) == 2:
         fake = generator([noise, coarse]); # fake laplacian
@@ -103,11 +103,11 @@ class Trainer(pl.LightningModule):
         predictions = self.discriminators[idx](samples);
       # 3) generator loss
       gen_labels = torch.ones([batch_size,]);
-      if self.args.gpus > 0: gen_labels = gen_labels.cuda();
+      gen_labels = gen_labels.to(self.device);
       gen_loss = self.criterion(predictions[:batch_size,0], gen_labels);
       # 4) discriminator loss
       disc_labels = torch.cat([torch.zeros([batch_size,]), torch.ones([batch_size,])]);
-      if self.args.gpus > 0: disc_labels = disc_labels.cuda();
+      disc_labels = disc_labels.to(self.device);
       disc_loss = self.criterion(predictions[:,0], disc_labels);
       # 5) save loss
       gen_losses.append(gen_loss);
