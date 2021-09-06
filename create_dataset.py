@@ -45,6 +45,10 @@ class CIFAR10Dataset(pl.LightningDataModule):
     testset = CIFAR10(root = 'cifar10', train = False, download = self.args.download, transform = self.transform);
     testset = DataLoader(testset, batch_size = self.args.batch_size, shuffle = True, num_workers = self.args.num_workers);
     return testset;
+  def val_dataloader(self,):
+    valset = CIFAR10(root = 'cifar10', train = False, download = self.args.download, transform = self.transform);
+    valsett = DataLoader(valset, batch_size = self.args.batch_size, shuffle = True, num_workers = self.args.num_workers);
+    return valset;
 
 if __name__ == "__main__":
   
