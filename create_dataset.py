@@ -20,14 +20,14 @@ class MultiScale(object):
     outputs = list();
     for i in range(self.n_scale):
       if i == self.n_scale - 1:
-        inputs.append(np.array(0,).astype(np.float32)); # dummy input
-        outputs.append(img);
+        inputs.append(torch.from_numpy(np.array(0,).astype(np.float32))); # dummy input
+        outputs.append(torch.from_numpy(img));
       else:
-        downsampled = np.array([cv2.pyrDown(img[c,...]) for c in range(3)]);
-        coarsed = np.array([cv2.pyrUp(downsampled[c,...]) for c in range(3)]);
+        downsampled = np.array([cv2.pyrDown(img[c,...]) for c in range(3)]); # downsampled.shape = (channel, h, w)
+        coarsed = np.array([cv2.pyrUp(downsampled[c,...]) for c in range(3)]); # corased.shape = (channel, h, w)
         residual = img - coarsed;
-        inputs.append(coarsed);
-        outputs.append(residual);
+        inputs.append(torch.from_numpy(coarsed));
+        outputs.append(torch.from_numpy(residual));
         # update img for next scale
         img = downsampled;
     return tuple(inputs + outputs);
